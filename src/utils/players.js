@@ -3,11 +3,10 @@ import { handlePhaseShift, reconcilePot, anteUpBlinds, determineBlindIndices } f
 import { dealMissingCommunityCards, showDown, generateDeckOfCards, shuffle, dealPrivateCards } from './cards.js';
 
 const axios = require('axios')
-// TODO Generate UUID to simulate User ID and really get a perf match on binding to players when determining winnings
 const generateTable = async () => {
 	const users = [{
 		id: uuid(),
-		name: 'Player 1',
+		name: 'Aditya Parikh',
 		avatarURL: '/assets/boy.svg',
 		cards: [],
 		showDownHand: {
@@ -27,10 +26,10 @@ const generateTable = async () => {
 		robot: false
 	}];
 
-	const response = await axios.get(`https://randomuser.me/api/?results=4&nat=us,gb,fr,es`);
-	response.data.results
-		.map(user => {
-			const randomizedChips = Math.floor(Math.random() * (20000 - 18000)) + 18000;
+	const response = await axios.get(`https://randomuser.me/api/?results=4&nat=in`);
+	response.data.results.map(user => {
+			// const randomizedChips = Math.floor(Math.random() * (20000 - 18000)) + 18000;
+			const randomizedChips = 20000;
 			return ({
 				id: uuid(),
 				name: `${user.name.first.charAt(0).toUpperCase()}${user.name.first.slice(1)} ${user.name.last.charAt(0).toUpperCase()}${user.name.last.slice(1)}`,
@@ -139,9 +138,9 @@ const determineNextActivePlayer = (state) => {
 		}
 	}
 
-	// IF a player is all in, he will be reconciled?
+	//after all bets are accepted this will move the game to next round
 	if (activePlayer.betReconciled) {
-		console.log("Player is reconciled with pot, round betting cycle complete, proceed to next round.")
+		//console.log("Player is reconciled with pot, round betting cycle complete, proceed to next round.")
 		return handlePhaseShift(state);
 	}
 
@@ -162,63 +161,50 @@ const passDealerChip = (state) => {
 }
 
 
-/* !!!!
- Action is initiated on the first betting round by the first player to the left of the blinds. On all subsequent betting rounds, the action begins with the first active player to the left of the button.
- */
 const filterBrokePlayers = (state, dealerID) => {
-	state.players = state.players.filter(player => player.chips > 0);
-	const newDealerIndex = state.players.findIndex(player => player.name === dealerID)
-	state.dealerIndex = newDealerIndex
-	state.activePlayerIndex = newDealerIndex // This is incorrect, action should proceed to the left of the blinds -- if there are only 2 people...will it be the small blind? If there are 3, is it the dealer? Action is initiated on the first betting round by the first player to the left of the blinds. On all subsequent betting rounds, the action begins with the first active player to the left of the button.)))) This means THIS FUNCTION WILL CHANGE depending on the ACTIVE PHASE....
-	if (state.players.length === 1) {
-		// Victory!
-		return state
-	} else if (state.players.length === 2) {
-		// Need to refine rules for who goes first when 2 players are left
-		// Can move this logic to our determineBlindIndices fn
-		state.blindIndex.small = newDealerIndex;
-		state.blindIndex.big = handleOverflowIndex(newDealerIndex, 1, state.players.length, 'up');
-		state.players = anteUpBlinds(state.players, { bigBlindIndex: state.blindIndex.big, smallBlindIndex: state.blindIndex.small }, state.minBet).map(player => ({
-			...player,
-			cards:[],
-			showDownHand: {
-				hand: [],
-				descendingSortHand: [],
-			},
-			roundStartChips: player.chips + player.bet,
-			currentRoundChipsInvested: 0,
-			betReconciled: false,
-			folded: false,
-			allIn: false,
-		}))
-		state.numPlayersAllIn = 0;
-		state.numPlayersFolded = 0;
-		state.numPlayersActive = state.players.length;
-	} else {
-		const blindIndicies = determineBlindIndices(newDealerIndex, state.players.length);
-		state.blindIndex = {
-        	big: blindIndicies.bigBlindIndex,
-        	small: blindIndicies.smallBlindIndex,
-      	}
-		state.players = anteUpBlinds(state.players, blindIndicies, state.minBet).map(player => ({
-			...player,
-			cards: [],
-			showDownHand: {
-				hand: [],
-				descendingSortHand: [],
-			},
-			roundStartChips: player.chips + player.bet,
-			currentRoundChipsInvested: 0,
-			betReconciled: false,
-			folded: false,
-			allIn: false,
-		}))
-		state.numPlayersAllIn = 0; // May need to alter this is big/small blind brings a player all in
-		state.numPlayersFolded = 0;
-		state.numPlayersActive = state.players.length;
-	}
-		return dealPrivateCards(state)
-}
+  const activePlayers = state.players.reduce((acc, player) => {
+    if (player.chips > 0) {
+      acc.push(player);
+    }
+    return acc;
+  }, []);
+
+  const newDealerIndex = activePlayers.findIndex(
+    (player) => player.name === dealerID
+  );
+  const blindIndicies = determineBlindIndices(
+    newDealerIndex,
+    activePlayers.length
+  );
+
+  state.players = anteUpBlinds(activePlayers, blindIndicies, state.minBet).map(
+    (player) => ({
+      ...player,
+      cards: [],
+      showDownHand: {
+        hand: [],
+        descendingSortHand: [],
+      },
+      roundStartChips: player.chips + player.bet,
+      currentRoundChipsInvested: 0,
+      betReconciled: false,
+      folded: false,
+      allIn: false,
+    })
+  );
+
+  state.dealerIndex = newDealerIndex;
+  state.blindIndex = {
+    big: blindIndicies.bigBlindIndex,
+    small: blindIndicies.smallBlindIndex,
+  };
+  state.numPlayersAllIn = 0;
+  state.numPlayersFolded = 0;
+  state.numPlayersActive = state.players.length;
+
+  return dealPrivateCards(state);
+};
+
 
 const beginNextRound = (state) => {
 	state.communityCards = [];
