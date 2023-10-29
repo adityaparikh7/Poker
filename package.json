@@ -9,6 +9,7 @@
     "lodash": "^4.17.21",
     "raf": "^3.4.1",
     "react": "^16.10",
+    "react-audio-player": "^0.17.0",
     "react-compound-slider": "^3.4.0",
     "react-dom": "^16.5.2",
     "react-scripts": "5.0.1",
