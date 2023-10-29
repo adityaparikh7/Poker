@@ -70,7 +70,7 @@ const handleOverflowIndex = (currentIndex, incrementBy, arrayLength, direction) 
 				((currentIndex - incrementBy) % arrayLength) + arrayLength 
 			)
 		}
-		default: throw Error("Attempted to overfow index on unfamiliar direction");
+		//default: throw Error("Attempted to overfow index on unfamiliar direction");
 	}
 }
 
@@ -90,45 +90,50 @@ const determinePhaseStartActivePlayer = (state, recursion = false) => {
 }
 
 const determineNextActivePlayer = (state) => {
-	state.activePlayerIndex = handleOverflowIndex(state.activePlayerIndex, 1, state.players.length, 'up');
-	const activePlayer = state.players[state.activePlayerIndex];
+  state.activePlayerIndex = handleOverflowIndex(
+    state.activePlayerIndex,
+    1,
+    state.players.length,
+    "up"
+  );
+  const activePlayer = state.players[state.activePlayerIndex];
 
-	const allButOnePlayersAreAllIn = (state.numPlayersActive - state.numPlayersAllIn === 1);
-	if (state.numPlayersActive ===  1) {
-		console.log("Only one player active, skipping to showdown.")
-		return(showDown(reconcilePot(dealMissingCommunityCards(state))));
-	}
-	if (activePlayer.folded) {
-		console.log("Current player index is folded, going to next active player.")
-		return determineNextActivePlayer(state);
-	}
+  const allButOnePlayersAreAllIn =
+    state.numPlayersActive - state.numPlayersAllIn === 1;
+  //Only one player active, skip to showdown.
+  if (state.numPlayersActive === 1) {
+    return showDown(reconcilePot(dealMissingCommunityCards(state)));
+  }
+  //Current player folded, go to next active player.
+  if (activePlayer.folded) {
+    return determineNextActivePlayer(state);
+  }
 
-	if (
-		allButOnePlayersAreAllIn &&
-		!activePlayer.folded &&
-		activePlayer.betReconciled
-	) {
-		return(showDown(reconcilePot(dealMissingCommunityCards(state))));
-	}
+  if (
+    allButOnePlayersAreAllIn &&
+    !activePlayer.folded &&
+    activePlayer.betReconciled
+  ) {
+    return showDown(reconcilePot(dealMissingCommunityCards(state)));
+  }
 
-	if (activePlayer.chips === 0) {
-		if (state.numPlayersAllIn === state.numPlayersActive) {
-			console.log("All players are all in.")
-			return(showDown(reconcilePot(dealMissingCommunityCards(state))));
-		} else if (allButOnePlayersAreAllIn && activePlayer.allIn) {
-			return(showDown(reconcilePot(dealMissingCommunityCards(state))));
-		} else {
-			return determineNextActivePlayer(state);
-		}
-	}
+  //All players are all in.
+  if (activePlayer.chips === 0) {
+    if (state.numPlayersAllIn === state.numPlayersActive) {
+      return showDown(reconcilePot(dealMissingCommunityCards(state)));
+    } else if (allButOnePlayersAreAllIn && activePlayer.allIn) {
+      return showDown(reconcilePot(dealMissingCommunityCards(state)));
+    } else {
+      return determineNextActivePlayer(state);
+    }
+  }
 
-	//after all bets are accepted this will move the game to next round
-	if (activePlayer.betReconciled) {
-		//console.log("Player is reconciled with pot, round betting cycle complete, proceed to next round.")
-		return handlePhaseShift(state);
-	}
+  //after all bets are accepted this will move the game to next round
+  if (activePlayer.betReconciled) {
+    return handlePhaseShift(state);
+  }
 
-	return state
+  return state;
 }
 
 
