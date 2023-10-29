@@ -6,9 +6,7 @@ import { sliderStyle, railStyle } from "../components/slider/styles";
 
 import { Slider, Rail, Handles, Tracks } from 'react-compound-slider'
 
-import { 
-  determineMinBet
-} from './bet.js';
+import {determineMinBet} from './bet.js';
 
 const renderPhaseStatement = (phase) => {
 	switch(phase) {
@@ -134,7 +132,7 @@ const renderActionMenu = (highBet, players, activePlayerIndex, phase, changeSlid
 				rootStyle={sliderStyle}
 				domain={[min, max]}
 				values={[min]}
-				step={1}
+				step={5}
 
 				onChange={changeSliderInputFn}
 					mode={2}
