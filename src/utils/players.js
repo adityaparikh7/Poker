@@ -149,8 +149,6 @@ const determineNextActivePlayer = (state) => {
 
 
 const passDealerChip = (state) => {
-	// This is messy because we are determining active player, dealer, and blinds based on an arbitrary index, not with flags on player entries.
-	// When we remove all players who have ran out of chips, the new indices will not match up cleanly. We need to find the index of the player, keep track of who it is or 
 	state.dealerIndex = handleOverflowIndex(state.dealerIndex, 1, state.players.length, 'up');
 	const nextDealer = state.players[state.dealerIndex]
 	if (nextDealer.chips === 0) {
