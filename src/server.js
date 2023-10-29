@@ -16,7 +16,7 @@ app.get("/api/playlist", (req, res) => {
     const audioFiles = files
       .filter((file) => path.extname(file) === ".mp3")
       .map((file) => ({
-        title: path.basename(file, ".mp3"), // Use the file name without the extension as the title
+        title: path.basename(file, ".mp3"), 
         file: path.join(audioFolder, file),
       }));
 

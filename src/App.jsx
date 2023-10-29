@@ -28,6 +28,7 @@ import { handleAI as handleAIUtil } from "./utils/ai.js";
 import {renderShowdownMessages,renderActionButtonText,renderNetPlayerEarnings,renderActionMenu,} from "./utils/ui.js";
 
 import { cloneDeep } from "lodash";
+import ReactAudioPlayer from "react-audio-player";
 
 class App extends Component {
   state = {
@@ -449,9 +450,6 @@ class App extends Component {
                 phase,
                 this.handleBetInputChange
               )}
-          </div>
-          <div className="music-player">
-            <MusicPlayer />
           </div>
         </div>
       </div>
