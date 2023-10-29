@@ -26,7 +26,7 @@ const generateTable = async () => {
 		robot: false
 	}];
 
-	const response = await axios.get(`https://randomuser.me/api/?results=4&nat=in`);
+	const response = await axios.get(`https://randomuser.me/api/?results=4&nat=in&gender=male`);
 	response.data.results.map(user => {
 			// const randomizedChips = Math.floor(Math.random() * (20000 - 18000)) + 18000;
 			const randomizedChips = 20000;
@@ -57,17 +57,6 @@ const generateTable = async () => {
 	return users
 }
 
-const generatePersonality = (seed) => {
-	switch(seed) {
-		case (seed > 0.5): 
-			return 'standard'
-		case (seed > 0.35): 
-			return 'aggressive'
-		case (seed > 0):
-		default: 
-			return 'conservative'
-	}
-}
 
 const handleOverflowIndex = (currentIndex, incrementBy, arrayLength, direction) => {
 	switch (direction) {
@@ -99,11 +88,6 @@ const determinePhaseStartActivePlayer = (state, recursion = false) => {
 		}
 				return state
 }
-
-
-// This function can lead to errors if player all ins at a certain position
-// final AI will freeze
-// seems to happen when only 2 players left and someone has all-in
 
 const determineNextActivePlayer = (state) => {
 	state.activePlayerIndex = handleOverflowIndex(state.activePlayerIndex, 1, state.players.length, 'up');
@@ -212,7 +196,7 @@ const beginNextRound = (state) => {
 	state.deck = shuffle(generateDeckOfCards())
 	state.highBet = 20;
 	state.betInputValue = 20;
-	state.minBet = 20; // can export out to initialState
+	state.minBet = 20; 
 	// Unmount all cards so react can re-trigger animations
 	const { players } = state;
 	const clearPlayerCards = players.map(player => ({...player, cards: player.cards.map(card => {})}))
