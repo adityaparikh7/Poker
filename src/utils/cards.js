@@ -258,7 +258,6 @@ const showDown = (state) => {
 }
 
 const buildBestHand = (hand, bestRank, flushedSuit, flushCards, concurrentCardValues, concurrentCardValuesLow, isLowStraight, isLowStraightFlush, concurrentSFCardValues, concurrentSFCardValuesLow, frequencyHistogramMetaData) => {
-	// TODO: LOW STRAGHT, STRAIGHT FLUSH (++ LOW STRAIGHT FLUSH...)
 	switch(bestRank) {
 		case('Royal Flush'): {
 			return flushCards.slice(0, 5)
@@ -415,7 +414,6 @@ const buildAbsolutePlayerRankings = (state) => {
 	
 	const activePlayers = state.players.filter(player => !player.folded);
 	let hierarchy = [];
-	// dupe logic from rankPlayerHands 
 	const rankMap = new Map([
 		['Royal Flush', []], 
 		['Straight Flush', []],
@@ -486,14 +484,6 @@ const determineContestedHierarchy = (sortedComparator, handRank) => {
 		const frame = comparator[round];
 		const { winningFrame, losingFrame } = processSnapshotFrame(frame);
 		if (losingFrame.length > 0) {
-			// Loser Hierarchy can have mixed types, Array of Objects OR Objects
-			// The comparators will be processed differently
-			// We will run processComparator on all entries. 
-			// If it's a single object, we can just concat it right up to the winnerHierarchy
-			// If it's an array, it's essentially a filtered comparator already and we will run it.
-			// Initial Loserhierarchy: [{steve, card:8}]
-			// losingFrame: [{dave, card:9}, {jim, card:4}]
-			// New loserHierarchy: [[{dave, card:9}, {jim, card:4}], {steve, card:8}]
 			const lowerTierComparator = filterableComparator.map(frame => {
 				return frame.filter(snapshot => {
 					return losingFrame.some(snapshotToMatchName => {
@@ -501,8 +491,6 @@ const determineContestedHierarchy = (sortedComparator, handRank) => {
 					})
 				})
 			})
-			// Push the filtered comparator to the FRONT of the losers queue. 
-			// Users who are eliminated earlier must be processed last, as they have worse cards than those who are eliminated later.
 			loserHierarchy = [lowerTierComparator].concat(loserHierarchy);
 		}
 		if (winningFrame.length === 1) {
@@ -584,9 +572,6 @@ const rankPlayerHands = (state, contestants) => {
 
 const battleRoyale = (state, rankMap, prize) => {
 	let winnerFound = false;
-
-	// Map.entries().find(([rank, contestants]) => { logic here })
-	// We can iterate in insertion order this way as well: for (const [key, value] of map) {} .. for of loop will be MUCH cleaner
 	rankMap.forEach((contestants, rank, map) => {
 		if (!winnerFound) {
 			if (contestants.length === 1) {
@@ -596,7 +581,6 @@ const battleRoyale = (state, rankMap, prize) => {
 			} else if (contestants.length > 1) {
 				console.log(contestants)
 				winnerFound = true
-				// Return Early. Build Truncated Comparators for different pair functions. length 4 for Pair, length 3 for 2 pairs, length 2 for full house/four of a kind, etc.
 				const winners = determineWinner(buildComparator(rank, contestants), rank)
 					if (winners.length === 1) {
 					   console.log("Uncontested Winner, ", winners[0].name, " , beating out the competition with a ", rank)
@@ -605,8 +589,6 @@ const battleRoyale = (state, rankMap, prize) => {
 					   console.log("We have a tie! Split the pot amongst ", winners, " Who will take the pot with their ", rank)
 						state = payWinners(state, winners, prize, rank)
 					}
-				// Send Contestants to Algo that Determines best hand of same ranks
-				// (contestants is an array of all contestants)
 			}
 		}})
 			return state
@@ -642,12 +624,11 @@ const payWinners = (state, winners, prize, rank) => {
 const buildComparator = (rank, playerData) => {
 	let comparator;
 	switch(rank) {
-		// TODO: Make These MORE DECLARATIVE!
 		case('Royal Flush'): {
 			comparator = Array.from({length: 1});
 			playerData.forEach((playerShowdownData, index) => {
 				comparator.push({
-					name: playerData[index].name, // All Royal Flush hands are instant ties, we don't need to process these contestants further, just divide the pot between all players in this array
+					name: playerData[index].name, 
 					playerIndex: playerData[index].playerIndex,
 					bestHand: playerData[index].bestHand
 				})
@@ -658,13 +639,13 @@ const buildComparator = (rank, playerData) => {
 			comparator = Array.from({length: 2}, () => Array.from({length: 0}))
 			playerData.forEach((playerShowdownData, index) => {
 				comparator[0].push({
-					card: playerData[index].bestHand[0], // First Card (Quad) -- same as second, third, and fourth card
+					card: playerData[index].bestHand[0], 
 					name: playerData[index].name,
 					playerIndex: playerData[index].playerIndex,
 					bestHand: playerData[index].bestHand
 				})
 				comparator[1].push({
-					card: playerData[index].bestHand[4], // Last Card (Kicker)
+					card: playerData[index].bestHand[4], 
 					name: playerData[index].name,
 					playerIndex: playerData[index].playerIndex,
 					bestHand: playerData[index].bestHand
@@ -676,13 +657,13 @@ const buildComparator = (rank, playerData) => {
 			comparator = Array.from({length: 2}, () => Array.from({length: 0}))
 			playerData.forEach((playerShowdownData, index) => {
 				comparator[0].push({
-					card: playerData[index].bestHand[0], // First Card (Tripple) -- same as second and third card
+					card: playerData[index].bestHand[0], 
 					name: playerData[index].name,
 					playerIndex: playerData[index].playerIndex,
 					bestHand: playerData[index].bestHand
 				})
 				comparator[1].push({
-					card: playerData[index].bestHand[3], // Fourth Card (Pair) -- same as fifth card
+					card: playerData[index].bestHand[3], 
 					name: playerData[index].name,
 					playerIndex: playerData[index].playerIndex,
 					bestHand: playerData[index].bestHand
@@ -696,7 +677,7 @@ const buildComparator = (rank, playerData) => {
 				playerData.forEach((playerShowdownData, index) => {
 					for (let i = 0; i < 5; i++) {
 						comparator[i].push({
-							card: playerData[index].bestHand[i], // We need to check all 5 cards of a flush/no-pair
+							card: playerData[index].bestHand[i], 
 							name: playerData[index].name,
 							playerIndex: playerData[index].playerIndex,
 							bestHand: playerData[index].bestHand
@@ -709,19 +690,19 @@ const buildComparator = (rank, playerData) => {
 			comparator = Array.from({length: 3}, () => Array.from({length: 0}))
 			playerData.forEach((playerShowdownData, index) => {
 				comparator[0].push({
-					card: playerData[index].bestHand[0], // First Card (Tripple) -- same as second and third cards
+					card: playerData[index].bestHand[0], 
 					name: playerData[index].name,
 					playerIndex: playerData[index].playerIndex,
 					bestHand: playerData[index].bestHand
 				});
 				comparator[1].push({
-					card: playerData[index].bestHand[3], // Fourth Card (First Kicker)
+					card: playerData[index].bestHand[3], 
 					name: playerData[index].name,
 					playerIndex: playerData[index].playerIndex,
 					bestHand: playerData[index].bestHand
 				});
 				comparator[2].push({
-					card: playerData[index].bestHand[4], // Fifth Card (Second Kicker)
+					card: playerData[index].bestHand[4], 
 					name: playerData[index].name,
 					playerIndex: playerData[index].playerIndex,
 					bestHand: playerData[index].bestHand
@@ -734,7 +715,7 @@ const buildComparator = (rank, playerData) => {
 			comparator = Array.from({length: 1}, () => Array.from({length: 0}))
 			playerData.forEach((playerShowdownData, index) => {
 				comparator[0].push({
-					card: playerData[index].bestHand[0], // The highest card of a straight will determine the winner, all others are concurrent and will be the same
+					card: playerData[index].bestHand[0],
 					name: playerData[index].name,
 					playerIndex: playerData[index].playerIndex,
 					bestHand: playerData[index].bestHand
@@ -746,19 +727,19 @@ const buildComparator = (rank, playerData) => {
 			comparator = Array.from({length: 3}, () => Array.from({length: 0}))
 			playerData.forEach((playerShowdownData, index) => {
 				comparator[0].push({
-					card: playerData[index].bestHand[0], // First card (First Pair) -- same as second card
+					card: playerData[index].bestHand[0], 
 					name: playerData[index].name,
 					playerIndex: playerData[index].playerIndex,
 					bestHand: playerData[index].bestHand
 				})
 				comparator[1].push({
-					card: playerData[index].bestHand[2], // Third card (Second Pair) -- same as fourth card
+					card: playerData[index].bestHand[2], 
 					name: playerData[index].name,
 					playerIndex: playerData[index].playerIndex,
 					bestHand: playerData[index].bestHand
 				})
 				comparator[2].push({
-					card: playerData[index].bestHand[4], // Last Card (Kicker)
+					card: playerData[index].bestHand[4], 
 					name: playerData[index].name,
 					playerIndex: playerData[index].playerIndex,
 					bestHand: playerData[index].bestHand
@@ -770,25 +751,25 @@ const buildComparator = (rank, playerData) => {
 			comparator = Array.from({length: 4}, () => Array.from({length: 0}))
 			playerData.forEach((playerShowdownData, index) => {
 				comparator[0].push({
-					card: playerData[index].bestHand[0], // First Card (Pair) -- same as second card
+					card: playerData[index].bestHand[0], 
 					name: playerData[index].name,
 					playerIndex: playerData[index].playerIndex,
 					bestHand: playerData[index].bestHand
 				});
 				comparator[1].push({
-					card: playerData[index].bestHand[2], // Third Card -- first kicker
+					card: playerData[index].bestHand[2], 
 					name: playerData[index].name,
 					playerIndex: playerData[index].playerIndex,
 					bestHand: playerData[index].bestHand
 				});
 				comparator[2].push({
-					card: playerData[index].bestHand[3], // Fourth Card -- second kicker
+					card: playerData[index].bestHand[3], 
 					name: playerData[index].name,
 					playerIndex: playerData[index].playerIndex,
 					bestHand: playerData[index].bestHand
 				});
 				comparator[3].push({
-					card: playerData[index].bestHand[4], //  Fifth Card -- third kicker
+					card: playerData[index].bestHand[4], 
 					name: playerData[index].name,
 					playerIndex: playerData[index].playerIndex,
 					bestHand: playerData[index].bestHand
@@ -803,12 +784,10 @@ const buildComparator = (rank, playerData) => {
 
 const determineWinner = (comparator, rank) => {
 	let winners;
-	// We can definitely refactor this.
 	if (rank === 'Royal Flush') return comparator
 		for (let i = 0; i < comparator.length; i++) {
 			let highValue = 0;
 			let losers = [];
-			// Sort Comparator, highest card first
 			winners = comparator[i].sort((a, b) => b.card.value - a.card.value).reduce((acc, cur, index) => {
 				if (cur.card.value > highValue) {
 					
@@ -845,8 +824,6 @@ const determineWinner = (comparator, rank) => {
 }
 
 const checkFlush = (suitHistogram) => {
-	let isFlush;
-	let flushedSuit;
 	for (let suit in suitHistogram) {
 		if (suitHistogram[suit] >= 5) {
 			return { 
@@ -883,7 +860,6 @@ const checkStraightFlush = (flushMatchCards) => {
 }
 
 const analyzeHistogram = (hand, frequencyHistogram) => {
-	// Is first argument required? - May be unused
 	let isFourOfAKind = false;
 	let isFullHouse = false
 	let isThreeOfAKind = false;
@@ -925,15 +901,12 @@ const analyzeHistogram = (hand, frequencyHistogram) => {
 		frequencyHistogramMetaData.pairs = frequencyHistogramMetaData.pairs.map(el => el).sort((a,b) => b.value - a.value)
 		frequencyHistogramMetaData.tripples = frequencyHistogramMetaData.tripples.map(el => el).sort((a,b) => b.value - a.value)
 		frequencyHistogramMetaData.quads = frequencyHistogramMetaData.quads.map(el => el).sort((a,b) => b.value - a.value)
-	// Ensure histogram arrays are sorted in descending order to build best hand top down
-	// can just check metadata length and omit the counters
 	if((numTripples >= 2) || (numPairs >= 1 && numTripples >=1)) {
 		isFullHouse = true
 	}
 	if(numPairs >= 2) {
 		isTwoPair = true
 	}
-
 		return {
 			isFourOfAKind,
 			isFullHouse,
@@ -942,7 +915,6 @@ const analyzeHistogram = (hand, frequencyHistogram) => {
 			isPair,
 			frequencyHistogramMetaData
 		}
-
 }
 
 const checkStraight = (valueSet) => {
@@ -998,9 +970,8 @@ const checkStraight = (valueSet) => {
 const checkLowStraight = (valueSetCopy) => {
 	let numConcurrentCards = 0;
 	let concurrentCardValuesLow = [];
-	valueSetCopy[0] = 0; // Convert Ace High Value (13) to Low Wildcard Value (0)
-	const sortedValueSetCopy = valueSetCopy.map(el => el).sort((a,b) => a - b); // Sort in Ascending Order 
-	// Basically look for [0, 1, 2, 3, 4,] AKA [A, 2, 3, 4, 5]
+	valueSetCopy[0] = 0; 
+	const sortedValueSetCopy = valueSetCopy.map(el => el).sort((a,b) => a - b); 
 	for (let i = 1; i < 5; i++) {
 		if (numConcurrentCards >= 5) {
 			return {
