@@ -451,6 +451,9 @@ class App extends Component {
                 this.handleBetInputChange
               )}
           </div>
+          <div className="music-player">
+            <MusicPlayer/>
+          </div>
         </div>
       </div>
     );
