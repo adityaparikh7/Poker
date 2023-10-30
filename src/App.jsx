@@ -1,8 +1,3 @@
-// import "@babel/polyfill";
-
-// import 'core-js/es6/map';
-// import 'core-js/es6/set';
-
 import "raf/polyfill";
 
 import React, { Component } from "react";
@@ -15,7 +10,6 @@ import WinScreen from "./WinScreen";
 import Player from "./components/players/Player";
 import ShowdownPlayer from "./components/players/ShowdownPlayer";
 import Card from "./components/cards/Card";
-import MusicPlayer from "./utils/music";
 
 import {generateDeckOfCards,shuffle,dealPrivateCards,} from "./utils/cards.js";
 
@@ -28,7 +22,6 @@ import { handleAI as handleAIUtil } from "./utils/ai.js";
 import {renderShowdownMessages,renderActionButtonText,renderNetPlayerEarnings,renderActionMenu,} from "./utils/ui.js";
 
 import { cloneDeep } from "lodash";
-import ReactAudioPlayer from "react-audio-player";
 
 class App extends Component {
   state = {
@@ -450,9 +443,6 @@ class App extends Component {
                 phase,
                 this.handleBetInputChange
               )}
-          </div>
-          <div className="music-player">
-            <MusicPlayer/>
           </div>
         </div>
       </div>
